@@ -11,12 +11,16 @@ let db = new sqlite3.Database('src/log-base.db', sqlite3.OPEN_READONLY, (err) =>
     console.log('Connected to the database.');
 });
 
-// db.close((err) => {
-//     if (err) {
-//         console.error(err.message);
-//     }
-//     console.log('Close the database connection.');
-// });
+function getQuery(sql, response, param=null) {
+    db.serialize(() => {
+        db.all(sql, param, (err, result) => {
+            if (err) {
+                console.error(err.message);
+            }
+            response.json(result);
+        });
+    });
+}
 
 app.use(cors());
 
@@ -26,28 +30,14 @@ app.get("/user/:userId", function(request, response){
     const sql = `SELECT * FROM logs WHERE user_id = ?`;
     const userId = request.params["userId"];
 
-    db.serialize(() => {
-        db.all(sql, userId, (err, result) => {
-            if (err) {
-                console.error(err.message);
-            }
-            response.json(result);
-        });
-    });
+    getQuery(sql, response, userId);
 });
 
 app.get("/day/:dayDate", function(request, response){
     const sql = 'SELECT * FROM logs WHERE date(time) = ?';
     const parseDate = request.params["dayDate"];
 
-    db.serialize(() => {
-        db.all(sql, parseDate, (err, result) => {
-            if (err) {
-                console.error(err.message);
-            }
-            response.json(result);
-        });
-    });
+    getQuery(sql, response, parseDate);
 });
 
 app.get("/period/:period", function(request, response){
@@ -68,14 +58,7 @@ app.get("/period/:period", function(request, response){
             return;
     }
 
-    db.serialize(() => {
-        db.all(sql, selectedPeriod, (err, result) => {
-            if (err) {
-                console.error(err.message);
-            }
-            response.json(result);
-        });
-    });
+    getQuery(sql, response, selectedPeriod);
 });
 
 app.get("/", function(request, response){
@@ -91,4 +74,9 @@ app.get("/", function(request, response){
     });
 });
 
-app.listen(3000);
+const conn = app.listen(3000);
+
+process.on('SIGINT', () => {
+    db.close();
+    conn.close();
+});
