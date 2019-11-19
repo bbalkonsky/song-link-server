@@ -2,9 +2,9 @@
   "name": "song-link-server",
   "version": "1.0.0",
   "description": "",
-  "main": "src/main.js",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node src/main.js"
+    "start": "node src/app.js"
   },
   "keywords": [],
   "author": "",
